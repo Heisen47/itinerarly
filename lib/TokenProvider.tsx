@@ -42,7 +42,7 @@ function checkAuthenticationMechanisms() {
     localStorage.getItem("X-Auth-Token") !== null ||
     localStorage.getItem("Authorization") !== null;
     
-  const oauthFlowStarted = typeof window !== 'undefined' ? sessionStorage.getItem("oauthFlowStarted") !== null : false;
+  const oauthFlowStarted = typeof window !== 'undefined' ? sessionStorage.getItem("oauthFlowStarted") : null;
   const authInProgress = typeof window !== 'undefined' ? sessionStorage.getItem("authInProgress") === "true" : false;
   const isGitHubFlow = oauthFlowStarted === 'github';
   
