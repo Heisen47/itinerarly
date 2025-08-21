@@ -32,8 +32,7 @@ function checkAuthenticationMechanisms() {
   if (altAuthTokenRaw && altAuthTokenRaw !== altAuthTokenFromJsCookie) {
     setCookieSafely(Cookies, "authToken", altAuthTokenFromJsCookie);
   }
-  
-  // Check URL for GitHub auth parameters
+
   const hasGitHubAuthInUrl = typeof window !== 'undefined' && 
     (window.location.search.includes('code=') || window.location.search.includes('state='));
     

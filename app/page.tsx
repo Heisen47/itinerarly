@@ -24,15 +24,14 @@ const Page: React.FC = () => {
     })
   );
 
-  const inViewStates = sectionRefs.map(ref => ref.inView);
-
   useEffect(() => {
+    const inViewStates = sectionRefs.map(ref => ref.inView);
     const visibleSectionIndex = inViewStates.findIndex(inView => inView);
     if (visibleSectionIndex !== -1) {
       const backgroundImage = sections[visibleSectionIndex]?.backgroundImage || '/assets/bg-poster.png';
       setCurrentBackground(backgroundImage);
     }
-  }, [inViewStates]);
+  }, [sectionRefs]); 
 
   return (
     <div className="min-h-screen flex flex-col">
