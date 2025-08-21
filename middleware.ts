@@ -11,6 +11,7 @@ export function middleware(request: NextRequest) {
   
   if (url.pathname.includes('/oauth2/') || 
       url.pathname.includes('/login/oauth2/') ||
+      url.pathname.includes('/github/login/oauth/') || // GitHub specific paths
       url.searchParams.has('code') || 
       url.searchParams.has('token') ||
       url.searchParams.has('auth') ||
@@ -58,6 +59,10 @@ function isValidOAuthReferer(refererUrl: string): boolean {
     
     const allowedOAuthHosts = [
       'github.com',
+      'api.github.com',
+      'github.io',
+      'githubusercontent.com',
+      'githubassets.com',
       'google.com', 
       'accounts.google.com',
       'oauth.google.com',

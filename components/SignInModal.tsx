@@ -25,6 +25,9 @@ const SiteUrl: string = process.env.NEXT_PUBLIC_SITE_URL || "https://itinerarly-
 
 const signInWithGithub = () => {
   if (typeof window !== 'undefined') {
+    sessionStorage.removeItem("oauthFlowStarted");
+    sessionStorage.removeItem("oauthFlowTimestamp");
+    sessionStorage.removeItem("authInProgress");
     sessionStorage.setItem("oauthFlowStarted", "github");
     sessionStorage.setItem("oauthFlowTimestamp", new Date().toISOString());
     sessionStorage.setItem("authInProgress", "true");
@@ -35,6 +38,10 @@ const signInWithGithub = () => {
 
 const signInWithGoogle = () => {
   if (typeof window !== 'undefined') {
+    sessionStorage.removeItem("oauthFlowStarted");
+    sessionStorage.removeItem("oauthFlowTimestamp");
+    sessionStorage.removeItem("authInProgress");
+    
     sessionStorage.setItem("oauthFlowStarted", "google");
     sessionStorage.setItem("oauthFlowTimestamp", new Date().toISOString());
     sessionStorage.setItem("authInProgress", "true");
@@ -54,12 +61,20 @@ export function SignInModal({ openModal, onClose }: SignInModalProps) {
       const hasAuthParams = url.searchParams.has('token') || 
                             url.searchParams.has('code') || 
                             url.searchParams.has('auth') ||
-                            url.searchParams.has('state');
+                            url.searchParams.has('state') ||
+                            url.pathname.includes('/login/oauth');
 
       const oauthFlowStarted = typeof window !== 'undefined' ? sessionStorage.getItem("oauthFlowStarted") : null;
       const authInProgress = typeof window !== 'undefined' ? sessionStorage.getItem("authInProgress") : null;
+      
+      const referer = document.referrer;
+      const isFromGitHub = referer && (
+        referer.includes('github.com') || 
+        referer.includes('api.github.com') || 
+        referer.includes('githubusercontent.com')
+      );
 
-      if (hasAuthParams || (oauthFlowStarted && authInProgress)) {
+      if (hasAuthParams || (oauthFlowStarted && authInProgress) || isFromGitHub) {
         console.log("OAuth flow detected, processing authentication...");
         setIsAuthenticating(true);
         

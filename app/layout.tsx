@@ -4,7 +4,6 @@ import { Analytics } from '@vercel/analytics/react'
 import { TokenProvider } from '@/lib/TokenProvider';
 import { GoogleAnalytics } from '@next/third-parties/google'
 import AuthWrapper from '@/components/AuthWrapper';
-import AuthDebugWrapper from '@/components/AuthDebugWrapper';
 import '@/lib/axios-config';
 
 export const metadata = {
@@ -22,6 +21,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <head>
         <title>{metadata.title}</title>
         <meta name="description" content={metadata.description} />
+        
+        {/* Favicon */}
+        <link rel="icon" href="/logo.svg" type="image/svg+xml" />
         
         {/* Performance optimizations */}
         <link rel="preload" href="/assets/bg-poster.png" as="image" type="image/png" />
@@ -42,7 +44,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <TokenProvider>
           {children}
           <AuthWrapper />
-          <AuthDebugWrapper />
         </TokenProvider>
         <Analytics />
         {gaId && <GoogleAnalytics gaId={gaId} />}
