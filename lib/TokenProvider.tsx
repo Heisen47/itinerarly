@@ -19,9 +19,11 @@ function checkAuthenticationMechanisms() {
 
   let authTokenRaw = Cookies.get("auth-token");
   let altAuthTokenRaw = Cookies.get("authToken");
+  let githubTokenRaw = Cookies.get("github-oauth-token"); // Check for GitHub-specific token
 
   let authTokenFromJsCookie = authTokenRaw ? extractJwtToken(authTokenRaw) : undefined;
   let altAuthTokenFromJsCookie = altAuthTokenRaw ? extractJwtToken(altAuthTokenRaw) : undefined;
+  let githubTokenFromJsCookie = githubTokenRaw ? extractJwtToken(githubTokenRaw) : undefined;
 
   if (authTokenRaw && authTokenRaw !== authTokenFromJsCookie) {
     setCookieSafely(Cookies, "auth-token", authTokenFromJsCookie);
@@ -31,6 +33,10 @@ function checkAuthenticationMechanisms() {
     setCookieSafely(Cookies, "authToken", altAuthTokenFromJsCookie);
   }
   
+  // Check URL for GitHub auth parameters
+  const hasGitHubAuthInUrl = typeof window !== 'undefined' && 
+    (window.location.search.includes('code=') || window.location.search.includes('state='));
+    
   const hasLocalStorageToken = 
     localStorage.getItem("token") !== null ||
     localStorage.getItem("X-Auth-Token") !== null ||
@@ -38,6 +44,7 @@ function checkAuthenticationMechanisms() {
     
   const oauthFlowStarted = typeof window !== 'undefined' ? sessionStorage.getItem("oauthFlowStarted") !== null : false;
   const authInProgress = typeof window !== 'undefined' ? sessionStorage.getItem("authInProgress") === "true" : false;
+  const isGitHubFlow = oauthFlowStarted === 'github';
   
   return (
     hasVisibleJsessionId || 
@@ -45,7 +52,9 @@ function checkAuthenticationMechanisms() {
     hasVisibleAuthToken ||
     authTokenFromJsCookie !== undefined ||
     altAuthTokenFromJsCookie !== undefined ||
+    githubTokenFromJsCookie !== undefined ||
     hasLocalStorageToken ||
+    hasGitHubAuthInUrl ||
     
     sessionStorage.getItem("isAuthenticated") === "true" ||
     localStorage.getItem("isAuthenticated") === "true" ||
@@ -85,6 +94,13 @@ export function TokenProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     setError(null);
     
+    // Check if we're in a GitHub OAuth flow
+    const isGitHubFlow = typeof window !== 'undefined' && 
+      sessionStorage.getItem("oauthFlowStarted") === "github";
+    
+    // Add a cache-busting parameter for GitHub auth to prevent caching issues
+    const cacheBuster = isGitHubFlow ? `?_=${new Date().getTime()}` : '';
+    
     const authTokenRaw = Cookies.get("auth-token");
     const altAuthTokenRaw = Cookies.get("authToken");
     
@@ -103,8 +119,12 @@ export function TokenProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      const response = await axios.get(`${SiteUrl}/api/v1/tokens/remaining`, {
-        withCredentials: true 
+      const response = await axios.get(`${SiteUrl}/api/v1/tokens/remaining${cacheBuster}`, {
+        withCredentials: true,
+        headers: {
+          'Cache-Control': isGitHubFlow ? 'no-cache, no-store' : undefined,
+          'Pragma': isGitHubFlow ? 'no-cache' : undefined
+        }
       });
       
       setToken(response.data.remainingTokens ?? 0);

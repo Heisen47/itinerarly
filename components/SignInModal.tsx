@@ -31,9 +31,14 @@ const signInWithGithub = () => {
     sessionStorage.setItem("oauthFlowStarted", "github");
     sessionStorage.setItem("oauthFlowTimestamp", new Date().toISOString());
     sessionStorage.setItem("authInProgress", "true");
+    
+    if (!window.location.pathname.includes('/signin')) {
+      sessionStorage.setItem("returnTo", window.location.pathname);
+    }
   }
 
-  window.location.href = `${SiteUrl}/oauth2/authorization/github`;
+  const timestamp = new Date().getTime();
+  window.location.href = `${SiteUrl}/oauth2/authorization/github?_=${timestamp}`;
 }
 
 const signInWithGoogle = () => {
@@ -41,10 +46,14 @@ const signInWithGoogle = () => {
     sessionStorage.removeItem("oauthFlowStarted");
     sessionStorage.removeItem("oauthFlowTimestamp");
     sessionStorage.removeItem("authInProgress");
-    
+
     sessionStorage.setItem("oauthFlowStarted", "google");
     sessionStorage.setItem("oauthFlowTimestamp", new Date().toISOString());
     sessionStorage.setItem("authInProgress", "true");
+
+    if (!window.location.pathname.includes('/signin')) {
+      sessionStorage.setItem("returnTo", window.location.pathname);
+    }
   }
 
   window.location.href = `${SiteUrl}/oauth2/authorization/google`;
@@ -94,7 +103,13 @@ export function SignInModal({ openModal, onClose }: SignInModalProps) {
           setTimeout(() => {
             if (isAuthenticated) {
               onClose();
-              window.location.replace("/start");
+              const returnTo = sessionStorage.getItem("returnTo");
+              if (returnTo && returnTo !== '/signin') {
+                sessionStorage.removeItem("returnTo");
+                window.location.replace(returnTo);
+              } else {
+                window.location.replace("/start");
+              }
             }
           }, 500);
         } catch (error) {
@@ -116,7 +131,7 @@ export function SignInModal({ openModal, onClose }: SignInModalProps) {
     return () => {
       hasHandled.current = false;
     };
-  }, []);
+  }, [openModal, refreshTokenCount, isAuthenticated]); 
 
   useEffect(() => {
     if (isAuthenticated && typeof window !== 'undefined' && 
