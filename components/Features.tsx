@@ -64,7 +64,7 @@ const Features: React.FC = () => {
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.4 }}
-        className=" sm:space-y-12  sm:py-16 relative"
+        className=" sm:space-y-12  sm:py-16 sm:mt-70 relative"
       >
         {/* Decorative elements */}
         <div className="absolute top-0 right-0 w-40 h-40 bg-green-500/10 rounded-full blur-3xl"></div>
