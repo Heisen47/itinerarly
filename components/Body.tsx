@@ -268,7 +268,7 @@ const Body: React.FC<BodyProps> = ({ sectionRefs, sections }) => {
             <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white">
               Community{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-purple-400">
-                {/* Highlights */}
+                Highlights
               </span>
             </h3>
             
