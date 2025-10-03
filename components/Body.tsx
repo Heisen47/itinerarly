@@ -264,7 +264,7 @@ const Body: React.FC<BodyProps> = ({ sectionRefs, sections }) => {
           transition={{ duration: 0.8, delay: 0.6 }}
           className="space-y-8 sm:space-y-12 relative z-30"
         >
-          <div className="space-y-4 mt-8 sm:mt-12 lg:mt-20 text-center text-lg sm:text-xl md:text-2xl font-semibold text-white">
+          <div className="space-y-4 mt-8 sm:mt-110 lg:mt-110 text-center text-lg sm:text-xl md:text-2xl font-semibold text-white">
             <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white">
               Community{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-purple-400">
@@ -410,6 +410,8 @@ const Body: React.FC<BodyProps> = ({ sectionRefs, sections }) => {
               </div>
             </div>
           </div>
+
+          
         </motion.div>
 
         <motion.div
