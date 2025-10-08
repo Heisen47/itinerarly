@@ -126,8 +126,8 @@ const Body: React.FC<BodyProps> = ({ sectionRefs, sections }) => {
     offset: ["start start", "end end"],
   });
 
-  const opacity1 = useTransform(scrollYProgress, [0, 0.3], [1, 0]);
-  const opacity2 = useTransform(scrollYProgress, [0.2, 0.6], [0, 1]);
+  const opacity1 = useTransform(scrollYProgress, [0.5, 1], [1, 0]);
+  const opacity2 = useTransform(scrollYProgress, [0.2, 0.5], [0, 1]);
   const opacity3 = useTransform(scrollYProgress, [0.5, 1], [0, 1]);
 
   return (
@@ -232,7 +232,6 @@ const Body: React.FC<BodyProps> = ({ sectionRefs, sections }) => {
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30" />
           </div>
 
-          
           <div className="relative z-10 text-white">
             <div className="max-w-7xl mx-auto px-4 py-8 space-y-16">
               <section className="min-h-screen flex items-center justify-center py-8">
@@ -257,24 +256,24 @@ const Body: React.FC<BodyProps> = ({ sectionRefs, sections }) => {
         </div>
       )}
 
-      <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:py-12 lg:py-16 space-y-12 sm:space-y-16 lg:space-y-20">
+      <div className="relative z-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10 space-y-8 sm:space-y-10 lg:space-y-12">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.6 }}
           className="space-y-8 sm:space-y-12 relative z-30"
         >
-          <div className="space-y-4 mt-8 sm:mt-110 lg:mt-110 text-center text-lg sm:text-xl md:text-2xl font-semibold text-white">
+          <div className="space-y-4 mt-8 sm:mt-110 lg:mt-110 text-center text-lg sm:text-xl md:text-2xl font-semibold text-white relative z-10">
             <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white">
               Community{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-purple-400">
                 Highlights
               </span>
             </h3>
-            
+
             <p className="text-base sm:text-lg text-slate-100 max-w-2xl mx-auto px-4">
-              Discover breathtaking destinations through the eyes of our
-              travel community
+              Discover breathtaking destinations through the eyes of our travel
+              community
             </p>
 
             <motion.div
@@ -327,8 +326,8 @@ const Body: React.FC<BodyProps> = ({ sectionRefs, sections }) => {
                 </motion.div>
               </div>
               <p className="text-xs text-white mt-3 px-4">
-                Upload to Imgur and share your incredible India moments with
-                our community
+                Upload to Imgur and share your incredible India moments with our
+                community
               </p>
             </motion.div>
           </div>
@@ -416,9 +415,9 @@ const Body: React.FC<BodyProps> = ({ sectionRefs, sections }) => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.8 }}
-          className="text-center space-y-6 pt-8 sm:pt-12 pb-8 relative z-30"
+          className="text-center space-y-6 pt-8 sm:pt-12 pb-8 relative z-5"
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent rounded-3xl" />
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent rounded-3xl pointer-events-none z-0" />
         </motion.div>
 
         {showFloatingElements && (
@@ -463,9 +462,7 @@ const Body: React.FC<BodyProps> = ({ sectionRefs, sections }) => {
               <p className="text-white text-base sm:text-lg font-medium">
                 Preparing your adventure...
               </p>
-              <p className="text-gray-300 text-sm mt-2">
-                This won't take long
-              </p>
+              <p className="text-gray-300 text-sm mt-2">This won't take long</p>
             </motion.div>
           </>
         )}

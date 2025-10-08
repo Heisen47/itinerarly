@@ -64,13 +64,11 @@ const Features: React.FC = () => {
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.4 }}
-        className=" sm:space-y-12  sm:py-16 sm:mt-70 relative"
+        className=" sm:space-y-12  sm:py-16 sm:mt-70 relative z-99"
       >
-       
-{/* Decorative elements */}
-<div className="absolute top-0 right-0 w-40 h-40 bg-green-500/10 rounded-full blur-3xl z-0"></div>
-<div className="absolute bottom-0 left-0 w-40 h-40 bg-purple-500/10 rounded-full blur-3xl z-0"></div>
-
+        {/* Decorative elements */}
+        <div className="absolute top-0 right-0 w-40 h-40 bg-green-500/10 rounded-full blur-3xl z-40 pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 w-40 h-40 bg-purple-500/10 rounded-full blur-3xl z-40 pointer-events-none"></div>
 
         <div className="text-center space-y-2">
           <motion.h2
@@ -96,7 +94,7 @@ const Features: React.FC = () => {
           </motion.p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-10 p-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-10 p-8 items-stretch relative z-50">
           {features.map((feature, index) => (
             <motion.div
               key={feature.label}
@@ -108,13 +106,14 @@ const Features: React.FC = () => {
                 y: -8,
                 transition: { duration: 0.25 },
               }}
-              className="group relative z-10 bg-white/5 backdrop-blur-lg p-6 sm:p-8 
-             rounded-3xl border border-white/10 hover:border-white/30 
-             transition-all duration-500 hover:shadow-2xl hover:shadow-white/10"
+              className="group pointer-events-auto relative z-50 bg-white/5 backdrop-blur-lg p-6 sm:p-8 rounded-3xl 
+                        border border-white/10 hover:border-white/30 transition-all duration-200 
+                        hover:shadow-2xl hover:shadow-white/10 transform hover:-translate-y-3 hover:scale-[1.02] 
+                        flex flex-col justify-between"
             >
               {/* Background glow effect */}
               <div
-                className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-500`}
+                className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-500 pointer-events-none`}
               />
 
               <div className="relative z-10">
@@ -135,9 +134,6 @@ const Features: React.FC = () => {
             </motion.div>
           ))}
         </div>
-
-       
-
       </motion.div>
     </>
   );
