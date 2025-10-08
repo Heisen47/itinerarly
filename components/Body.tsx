@@ -16,12 +16,54 @@ import { useRouter } from "next/navigation";
 import Home from "./Home";
 import About from "./About";
 import Features from "./Features";
+import { createApi } from 'unsplash-js';
 
 const stats = [
   { number: "5", label: "Happy Travelers" },
   { number: "7+", label: "Destinations" },
   { number: "98%", label: "Satisfaction Rate" },
 ];
+
+const unsplash = createApi({
+  accessKey: process.env.NEXT_PUBLIC_UNSPLASH_ACCESS_KEY || ''
+});
+
+console.log('Unsplash Access Key:', process.env.NEXT_PUBLIC_UNSPLASH_ACCESS_KEY);
+
+const getSeasonalQuery = (season: string) => {
+  const queries = {
+    spring: [
+      'holi festival india celebration',
+      'india basant panchami',
+      'india spring temple ritual',
+      'ugadi festival india',
+      'baisakhi celebration india'
+    ],
+    summer: [
+      'goa beach india tourism',
+      'kerala backwaters india',
+      'andaman beach india',
+      'kovalam beach india',
+      'india summer palace architecture'
+    ],
+    monsoon: [
+      'kerala monsoon waterfalls',
+      'meghalaya rain cherrapunji',
+      'mumbai monsoon rain',
+      'western ghats waterfalls monsoon',
+      'india rainy season landscape'
+    ],
+    winter: [
+      'kashmir snow winter',
+      'shimla winter snowfall',
+      'auli skiing india',
+      'kedarnath snow temple',
+      'manali winter landscape'
+    ]
+  };
+  
+  return `${queries[season][Math.floor(Math.random() * queries[season].length)]} landscape`;
+};
 
 interface BodyProps {
   sectionRefs: Array<{ ref: (node?: Element | null) => void }>;
@@ -33,38 +75,133 @@ interface BodyProps {
   }>;
 }
 
-const communityImages = [
-  {
-    url: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=800&q=80",
-    title: "Serene Mountain Views",
-    location: "Himachal Pradesh",
-  },
-  {
-    url: "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=800&q=80",
-    title: "Pristine Beach Paradise",
-    location: "Goa",
-  },
-  {
-    url: "https://images.unsplash.com/photo-1524492412937-b28074a5d7da?auto=format&fit=crop&w=800&q=80",
-    title: "Historic Architecture",
-    location: "Uttar Pradesh",
-  },
-  {
-    url: "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?auto=format&fit=crop&w=800&q=80",
-    title: "Cultural Heritage",
-    location: "Kerala",
-  },
-  {
-    url: "https://images.unsplash.com/photo-1570168007204-dfb528c6958f?auto=format&fit=crop&w=800&q=80",
-    title: "Urban Adventures",
-    location: "Mumbai",
-  },
-];
+const festivalImages = {
+  spring: [
+    {
+      url: "https://images.unsplash.com/photo-1756454487537-1fa7ad135349?q=80&w=1331&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      title: "Holi Festival Celebrations",
+      location: "Mathura, India",
+    },
+    {
+      url: "https://images.unsplash.com/photo-1679551989661-1215a49ad857?q=80&w=1073&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      title: "Spring in Kashmir",
+      location: "Kashmir Valley",
+    },
+    {
+      url: "https://images.unsplash.com/photo-1566837497312-7be7830ae9b1?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      title: "Tulip Gardens",
+      location: "Srinagar, India",
+    },
+    {
+      url: "https://images.unsplash.com/photo-1745988583865-2249654d864c?q=80&w=735&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      title: "Spring Festivals",
+      location: "Rajasthan, India",
+    },
+    {
+      url: "https://images.unsplash.com/photo-1715352491773-f7d0d6665982?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      title: "Spring Colors",
+      location: "Punjab, India",
+    },
+  ],
+  summer: [
+    {
+      url: "https://images.unsplash.com/photo-1724947052687-e580b3010aad?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      title: "Summer Palace",
+      location: "Udaipur, India",
+    },
+    {
+      url: "https://images.unsplash.com/photo-1669111814536-311c10acfd35?q=80&w=1332&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      title: "Tea Gardens",
+      location: "Munnar, Kerala",
+    },
+    {
+      url: "https://images.unsplash.com/photo-1587538445896-d1f222cb0653?q=80&w=1169&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D5",
+      title: "Summer Hills",
+      location: "Ooty, Tamil Nadu",
+    },
+    {
+      url: "https://images.unsplash.com/photo-1597820334272-af87b2d917c1?q=80&w=1856&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      title: "Beach Life",
+      location: "Goa, India",
+    },
+    {
+      url: "https://images.unsplash.com/photo-1720553359883-43e221149b74?q=80&w=1935&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      title: "Summer Markets",
+      location: "Delhi, India",
+    },
+  ],
+  monsoon: [
+    {
+      url: "https://images.unsplash.com/photo-1722162049797-c392b5b4b296?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D3",
+      title: "Monsoon Beauty",
+      location: "Kerala, India",
+    },
+    {
+      url: "https://images.unsplash.com/photo-1697186391822-832e28df612b?q=80&w=739&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      title: "Rainy Season",
+      location: "Mumbai, India",
+    },
+    {
+      url: "https://images.unsplash.com/photo-1609276804051-8c5e906cc430?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      title: "Sister Falls",
+      location: "Meghalaya, India",
+    },
+    {
+      url: "https://images.unsplash.com/photo-1619260584294-8a4e63f5ade5?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      title: "Monsoon Trek",
+      location: "Western Ghats",
+    },
+    {
+      url: "https://images.unsplash.com/photo-1579795009872-2bc910c56f0e?q=80&w=1176&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      title: "Rain-soaked Streets",
+      location: "Kolkata, India",
+    },
+  ],
+  winter: [
+    {
+      url: "https://images.unsplash.com/photo-1644691338782-72fa80619050?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      title: "Snowy Mountains",
+      location: "Himachal Pradesh",
+    },
+    {
+      url: "https://images.unsplash.com/photo-1568210283472-e8ac6ceb4090?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      title: "Winter Palace",
+      location: "Jaisalmer, India",
+    },
+    {
+      url: "https://images.unsplash.com/photo-1585904194096-15ef66ccd234?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      title: "Winter Festival",
+      location: "Nagaland, India",
+    },
+    {
+      url: "https://images.unsplash.com/photo-1544160621-5751b778eff9?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      title: "Snow Trek",
+      location: "Ladakh, India",
+    },
+    {
+      url: "https://images.unsplash.com/photo-1576201018761-8952329c07df?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      title: "Winter Markets",
+      location: "Delhi, India",
+    },
+  ],
+};
+
+const getCurrentSeason = () => {
+  const month = new Date().getMonth();
+  if (month >= 2 && month <= 4) return "spring";
+  if (month >= 5 && month <= 7) return "summer";
+  if (month >= 8 && month <= 9) return "monsoon";
+  return "winter";
+};
 
 const Body: React.FC<BodyProps> = ({ sectionRefs, sections }) => {
   const carouselRef = useRef<HTMLDivElement>(null);
+  const [currentSeason] = useState(getCurrentSeason());
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
+  const [currentImages, setCurrentImages] = useState<Array<{ url: string; title: string; location: string }>>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [imagesLoaded, setImagesLoaded] = useState<boolean[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const [showFloatingElements, setShowFloatingElements] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -87,14 +224,33 @@ const Body: React.FC<BodyProps> = ({ sectionRefs, sections }) => {
   }, []);
 
   useEffect(() => {
+    // Initialize with shuffled seasonal images
+    const shuffledImages = [...festivalImages[currentSeason]].sort(() => Math.random() - 0.5);
+    setCurrentImages(shuffledImages);
+
+    // Set up the rotation interval
     const interval = setInterval(() => {
       setCurrentImageIndex((prev) =>
-        prev === communityImages.length - 1 ? 0 : prev + 1
+        prev === currentImages.length - 1 ? 0 : prev + 1
       );
     }, 4000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [currentSeason]);
+
+  // Add this useEffect for carousel rotation
+  useEffect(() => {
+    // Only start carousel if all images are loaded
+    if (imagesLoaded.every(loaded => loaded)) {
+      const interval = setInterval(() => {
+        setCurrentImageIndex((prev) =>
+          prev === currentImages.length - 1 ? 0 : prev + 1
+        );
+      }, 4000);
+
+      return () => clearInterval(interval);
+    }
+  }, [currentImages, imagesLoaded]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -110,13 +266,13 @@ const Body: React.FC<BodyProps> = ({ sectionRefs, sections }) => {
 
   const nextImage = () => {
     setCurrentImageIndex((prev) =>
-      prev === communityImages.length - 1 ? 0 : prev + 1
+      prev === currentImages.length - 1 ? 0 : prev + 1
     );
   };
 
   const prevImage = () => {
     setCurrentImageIndex((prev) =>
-      prev === 0 ? communityImages.length - 1 : prev - 1
+      prev === 0 ? currentImages.length - 1 : prev - 1
     );
   };
 
@@ -129,6 +285,96 @@ const Body: React.FC<BodyProps> = ({ sectionRefs, sections }) => {
   const opacity1 = useTransform(scrollYProgress, [0.5, 1], [1, 0]);
   const opacity2 = useTransform(scrollYProgress, [0.2, 0.5], [0, 1]);
   const opacity3 = useTransform(scrollYProgress, [0.5, 1], [0, 1]);
+
+  // Add this constant for location validation
+  const INDIAN_LOCATIONS = {
+    states: [
+      'andhra pradesh', 'arunachal pradesh', 'assam', 'bihar', 'chhattisgarh',
+      'goa', 'gujarat', 'haryana', 'himachal pradesh', 'jharkhand', 'karnataka',
+      'kerala', 'madhya pradesh', 'maharashtra', 'manipur', 'meghalaya', 'mizoram',
+      'nagaland', 'odisha', 'punjab', 'rajasthan', 'sikkim', 'tamil nadu',
+      'telangana', 'tripura', 'uttar pradesh', 'uttarakhand', 'west bengal'
+    ],
+    unionTerritories: [
+      'delhi', 'jammu and kashmir', 'ladakh', 'puducherry',
+      'andaman and nicobar islands', 'chandigarh',
+      'dadra and nagar haveli and daman and diu', 'lakshadweep'
+    ],
+    majorCities: [
+      'mumbai', 'delhi', 'bangalore', 'hyderabad', 'chennai', 'kolkata',
+      'jaipur', 'agra', 'varanasi', 'udaipur', 'jaisalmer', 'kochi',
+      'amritsar', 'rishikesh', 'darjeeling', 'shimla', 'manali', 'ooty',
+      'mysore', 'pune', 'srinagar', 'leh'
+    ]
+  };
+
+  useEffect(() => {
+    const loadImages = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        if (!process.env.NEXT_PUBLIC_UNSPLASH_ACCESS_KEY) {
+          throw new Error('No API key found');
+        }
+
+        const result = await unsplash.photos.getRandom({
+          query: getSeasonalQuery(currentSeason),
+          count: 15, // Request more images to allow for filtering
+          orientation: 'landscape',
+          content_filter: 'high',
+        });
+
+        if (!result.response) {
+          throw new Error('No images received');
+        }
+
+        const images = Array.isArray(result.response) ? result.response : [result.response];
+        
+        // Filter images with valid Indian locations
+        const indianImages = images.filter(photo => {
+          const location = photo.location?.city || photo.location?.name || '';
+          
+          // Check if the location contains any valid Indian location
+          return INDIAN_LOCATIONS.states.some(state => 
+            location.toLowerCase().includes(state.toLowerCase())
+          ) || 
+          INDIAN_LOCATIONS.unionTerritories.some(ut => 
+            location.toLowerCase().includes(ut.toLowerCase())
+          ) ||
+          INDIAN_LOCATIONS.majorCities.some(city => 
+            location.toLowerCase().includes(city.toLowerCase())
+          );
+        });
+
+        // If we don't have enough valid Indian images, use fallback
+        if (indianImages.length < 5) {
+          console.log('Not enough valid Indian locations found, using fallback images');
+          setCurrentImages(festivalImages[currentSeason]);
+          return;
+        }
+
+        // Take only the first 5 filtered images with valid locations
+        const finalImages = indianImages.slice(0, 5).map(photo => ({
+          url: photo.urls.regular,
+          title: '', // Remove titles as requested
+          location: photo.location?.city || photo.location?.name
+        }));
+
+        setCurrentImages(finalImages);
+        setImagesLoaded(new Array(finalImages.length).fill(false));
+
+      } catch (error) {
+        console.error('Error loading images:', error);
+        setError('Failed to load images');
+        setCurrentImages(festivalImages[currentSeason]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadImages();
+  }, [currentSeason]);
 
   return (
     <div className="relative overflow-hidden">
@@ -341,26 +587,43 @@ const Body: React.FC<BodyProps> = ({ sectionRefs, sections }) => {
                   transform: `translateX(-${currentImageIndex * 100}%)`,
                 }}
               >
-                {communityImages.map((img, idx) => (
+                {currentImages.map((img, idx) => (
                   <div key={idx} className="w-full flex-shrink-0 relative">
                     <Image
                       src={img.url}
                       alt={img.title}
                       width={800}
                       height={500}
-                      className="w-full h-48 sm:h-64 md:h-80 lg:h-96 xl:h-[500px] object-cover object-center"
+                      className={`w-full h-48 sm:h-64 md:h-80 lg:h-96 xl:h-[500px] object-cover object-center transition-opacity duration-500 ${
+                        imagesLoaded[idx] ? 'opacity-100' : 'opacity-0'
+                      }`}
                       loading={idx === 0 ? "eager" : "lazy"}
                       priority={idx === 0}
                       quality={90}
-                      placeholder="blur"
-                      blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
+                      onLoad={() => {
+                        setImagesLoaded(prev => {
+                          const newLoaded = [...prev];
+                          newLoaded[idx] = true;
+                          return newLoaded;
+                        });
+                      }}
+                      onError={() => {
+                        // Fallback to static image
+                        const fallbackImage = festivalImages[currentSeason][idx];
+                        img.url = fallbackImage.url;
+                        img.title = fallbackImage.title;
+                        img.location = fallbackImage.location;
+                        // Mark image as loaded even if it's fallback
+                        setImagesLoaded(prev => {
+                          const newLoaded = [...prev];
+                          newLoaded[idx] = true;
+                          return newLoaded;
+                        });
+                      }}
                       sizes="(max-width: 640px) 100vw, (max-width: 768px) 90vw, (max-width: 1024px) 80vw, 800px"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
                     <div className="absolute bottom-3 sm:bottom-6 left-3 sm:left-6 right-3 sm:right-6 text-white">
-                      <h4 className="text-lg sm:text-xl md:text-2xl font-bold mb-1 sm:mb-2">
-                        {img.title}
-                      </h4>
                       <div className="flex items-center space-x-2 text-xs sm:text-sm md:text-base text-gray-200">
                         <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
                         <span>{img.location}</span>
@@ -388,7 +651,7 @@ const Body: React.FC<BodyProps> = ({ sectionRefs, sections }) => {
             </div>
 
             <div className="flex justify-center space-x-2 sm:space-x-3 mt-4 sm:mt-6 md:mt-8">
-              {communityImages.map((_, idx) => (
+              {currentImages.map((_, idx) => (
                 <button
                   key={idx}
                   onClick={() => scrollToImage(idx)}
@@ -417,7 +680,7 @@ const Body: React.FC<BodyProps> = ({ sectionRefs, sections }) => {
           transition={{ duration: 0.6, delay: 0.8 }}
           className="text-center space-y-6 pt-8 sm:pt-12 pb-8 relative z-5"
         >
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent rounded-3xl pointer-events-none z-0" />
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent rounded-3xl pointer-events-none z-0" />
         </motion.div>
 
         {showFloatingElements && (
@@ -465,6 +728,18 @@ const Body: React.FC<BodyProps> = ({ sectionRefs, sections }) => {
               <p className="text-gray-300 text-sm mt-2">This won't take long</p>
             </motion.div>
           </>
+        )}
+
+        {!imagesLoaded.every(loaded => loaded) && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <LoaderCircle className="w-8 h-8 animate-spin text-white" />
+          </div>
+        )}
+
+        {error && (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-red-500/80 text-white px-4 py-2 rounded-full text-sm">
+            {error}
+          </div>
         )}
       </div>
     </div>
