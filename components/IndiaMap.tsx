@@ -19,6 +19,10 @@ import { StateDetailsModal } from "./StateDetailsModal";
 interface IndiaMapProps {
   type: string | null;
 }
+type OnMoveEndProps = {
+  coordinates: [number, number];
+  zoom: number;
+};
 
 export default function IndiaMap({ type }: IndiaMapProps) {
   const [hoveredPlace, setHoveredPlace] = useState<string | null>(null);
@@ -43,7 +47,9 @@ export default function IndiaMap({ type }: IndiaMapProps) {
   const [minZoom, setMinZoom] = useState(1);
   const [initialZoom, setInitialZoom] = useState(1);
 
-  useEffect(() => {
+  const [isDragging, setIsDragging] = useState(false);
+  const [isOverState, setIsOverState] = useState(false);
+ useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth < 480) {
         setMapScale(1400);
@@ -62,15 +68,16 @@ export default function IndiaMap({ type }: IndiaMapProps) {
 
     handleResize();
 
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+ 
+  useEffect(() => {
     setPosition((pos) => ({
       ...pos,
       zoom: initialZoom,
     }));
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
+  }, [initialZoom]);
   const selectedSection = sections.find((section) => section.id === type);
   const highlightedPlaces = selectedSection?.places || [];
 
@@ -144,6 +151,16 @@ export default function IndiaMap({ type }: IndiaMapProps) {
     setShowStateModal(false);
   };
 
+  const isZoomedIn = position.zoom > initialZoom;
+const cursorClass = isOverState
+  ? "cursor-pointer"
+  : isZoomedIn
+  ? isDragging
+    ? "cursor-grabbing"
+    : "cursor-grab"
+  : "cursor-default";
+
+
   return (
     <div className="w-full h-full bg-blue-500 relative overflow-hidden">
       <div className="absolute top-5 right-5 z-10 flex flex-col gap-2">
@@ -190,17 +207,16 @@ export default function IndiaMap({ type }: IndiaMapProps) {
           style={{ width: "100%", height: "100%" }}
         >
           <ZoomableGroup
-            zoom={position.zoom}
             center={position.coordinates}
-            onMoveEnd={({
-              coordinates,
-              zoom,
-            }: {
-              coordinates: [number, number];
-              zoom: number;
-            }) => setPosition({ coordinates, zoom })}
+            zoom={position.zoom}
+            onMoveStart={() => setIsDragging(true)}
+             onMoveEnd={({ coordinates, zoom }: OnMoveEndProps) => {
+    setPosition({ coordinates, zoom });
+    setIsDragging(false);
+  }}
             maxZoom={5}
             minZoom={minZoom}
+            className={cursorClass}
           >
             <Geographies geography={indiaGeoJson}>
               {({ geographies }: { geographies: any[] }) =>
@@ -223,11 +239,13 @@ export default function IndiaMap({ type }: IndiaMapProps) {
                       ) => {
                         setHoveredState(name);
                         setStateMousePosition({ x: e.clientX, y: e.clientY });
+                        setIsOverState(true);
                       }}
                       onMouseLeave={() => {
                         if (!selectedState || selectedState !== name) {
                           setHoveredState(null);
                         }
+                        setIsOverState(false);
                       }}
                       onClick={(
                         e: React.MouseEvent<SVGPathElement, MouseEvent>
@@ -242,12 +260,16 @@ export default function IndiaMap({ type }: IndiaMapProps) {
                             ? "#FFA500"
                             : "#D6D6DA",
                           outline: "none",
+                          cursor:"pointer",
                         },
                         hover: {
                           fill: isHovered ? "#FFA500" : "#E6E6EA",
                           outline: "none",
+                          cursor:"pointer"
                         },
-                        pressed: { fill: "#D6D6DA", outline: "none" },
+                        pressed: { fill: "#D6D6DA", outline: "none",
+                          cursor:"pointer",
+                        },
                       }}
                     />
                   );
