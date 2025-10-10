@@ -420,13 +420,14 @@ const Body: React.FC<BodyProps> = ({ sectionRefs, sections }) => {
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent rounded-3xl pointer-events-none z-0" />
         </motion.div>
 
-        {showFloatingElements && (
+        {/* This BackToTop button was removed because a universal one was added */}
+        {/* {showFloatingElements && (
           <motion.button
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 z-50 p-3 rounded-full bg-gradient-to-r from-orange-500/80 to-purple-500/80 shadow-lg shadow-orange-500/20 backdrop-blur-sm border border-white/20 hover:border-white/40 transition-all duration-300 hover:scale-110"
+            className="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 p-3 rounded-full bg-gradient-to-r from-orange-500/80 to-purple-500/80 shadow-lg shadow-orange-500/20 backdrop-blur-sm border border-white/20 hover:border-white/40 transition-all duration-300 hover:scale-110 z-[99999]"
             aria-label="Back to top"
           >
             <svg
@@ -444,7 +445,7 @@ const Body: React.FC<BodyProps> = ({ sectionRefs, sections }) => {
               />
             </svg>
           </motion.button>
-        )}
+        )} */}
 
         {isLoading && (
           <>

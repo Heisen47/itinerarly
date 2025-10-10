@@ -179,7 +179,7 @@ export default function IndiaMap({ type }: IndiaMapProps) {
       {isMapLoading ? (
         <div className="h-full w-full flex items-center justify-center">
           <LoaderCircle className="w-12 h-12 animate-spin text-white" />
-        </div>
+        </div>     
       ) : (
         <ComposableMap
           projection="geoMercator"
@@ -200,7 +200,7 @@ export default function IndiaMap({ type }: IndiaMapProps) {
               zoom: number;
             }) => setPosition({ coordinates, zoom })}
             maxZoom={5}
-            minZoom={minZoom}
+            minZoom={minZoom}    //map cursor-zoom
           >
             <Geographies geography={indiaGeoJson}>
               {({ geographies }: { geographies: any[] }) =>

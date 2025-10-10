@@ -1,5 +1,5 @@
 "use client";
-
+import BackToTop from "@/components/ui/BackToTop"
 import React from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -9,7 +9,8 @@ import Image from "next/image";
 const Home: React.FC = () => {
   return (
     <>
-
+    {/* Adding universal BackToTop Button */}
+    <BackToTop />
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
