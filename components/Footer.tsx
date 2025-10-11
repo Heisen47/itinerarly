@@ -18,7 +18,6 @@ const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
 
   const quickLinks = [
-    { name: 'Home', href: '#home' },
     { name: 'Features', href: '#features' },
     { name: 'About', href: '#about' },
     { name: 'Plan Trip', href: '/start' },
@@ -43,12 +42,12 @@ const Footer: React.FC = () => {
       label: 'LinkedIn',
       color: 'hover:text-blue-500 hover:border-blue-500/50'
     },
-    { 
-      icon: Mail, 
-      href: 'mailto:contact@itinerarly.com', 
-      label: 'Email',
-      color: 'hover:text-orange-400 hover:border-orange-400/50'
-    },
+    // { 
+    //   icon: Mail, 
+    //   href: 'mailto:contact@itinerarly.com', 
+    //   label: 'Email',
+    //   color: 'hover:text-orange-400 hover:border-orange-400/50'
+    // },
   ];
 
   return (
