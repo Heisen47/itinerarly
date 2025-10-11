@@ -71,3 +71,15 @@ Before submitting your issue, please help us by providing the right information 
 
 **Additional Context:**
 <!-- Add any other context about the problem here -->
+
+---
+
+## 🔗 When Creating a PR
+
+**Important:** When you create a Pull Request to fix this issue, include one of these keywords in your PR description to automatically close this issue when the PR is merged:
+
+- `Closes #[issue_number]` (replace [issue_number] with this issue's number)
+- `Fixes #[issue_number]`
+- `Resolves #[issue_number]`
+
+**Example:** `Closes #123` (if this is issue #123)
