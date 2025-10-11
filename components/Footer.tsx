@@ -109,12 +109,12 @@ const Footer: React.FC = () => {
               <span>Contact</span>
             </h4>
             <ul className="space-y-3">
-              <li className="flex items-start space-x-3 text-sm text-gray-400">
+              {/* <li className="flex items-start space-x-3 text-sm text-gray-400">
                 <Mail className="w-4 h-4 mt-0.5 text-orange-400 flex-shrink-0" />
                 <a href="mailto:contact@itinerarly.com" className="hover:text-orange-400 transition-colors duration-300">
                   contact@itinerarly.com
                 </a>
-              </li>
+              </li> */}
               <li className="flex items-start space-x-3 text-sm text-gray-400">
                 <MapPin className="w-4 h-4 mt-0.5 text-orange-400 flex-shrink-0" />
                 <span>Exploring India, One Trip at a Time</span>
