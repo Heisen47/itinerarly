@@ -39,7 +39,7 @@ const Footer: React.FC = () => {
     },
     { 
       icon: Linkedin, 
-      href: 'https://linkedin.com', 
+      href: 'https://www.linkedin.com/in/saptarshi-chakraborty-3031999march/', 
       label: 'LinkedIn',
       color: 'hover:text-blue-500 hover:border-blue-500/50'
     },
@@ -83,7 +83,7 @@ const Footer: React.FC = () => {
           </div>
 
           {/* Quick Links */}
-          <div className="space-y-4">
+          <div className="hidden md:block space-y-4">
             <h4 className="text-lg font-semibold text-white flex items-center space-x-2">
               <ExternalLink className="w-5 h-5 text-orange-400" />
               <span>Quick Links</span>
