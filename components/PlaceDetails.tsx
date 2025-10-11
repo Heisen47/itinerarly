@@ -126,7 +126,7 @@ const PlaceDetails: React.FC<PlaceDetailsProps> = ({
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[1000]"
+      className="fixed top-16 left-0 right-0 bottom-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[1000]"
       onClick={onClose}
     >
       <div
