@@ -130,7 +130,7 @@ const PlaceDetails: React.FC<PlaceDetailsProps> = ({
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-xl shadow-2xl max-w-lg w-full m-4 overflow-hidden"
+        className="absolute top-20 bg-white rounded-xl shadow-2xl max-w-lg w-full m-4 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="bg-blue-600 text-white p-4">
