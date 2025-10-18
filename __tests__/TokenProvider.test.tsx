@@ -11,6 +11,8 @@ const mockedAxios = axios as jest.Mocked<typeof axios>;
 // Mock js-cookie
 jest.mock('js-cookie', () => ({
   get: jest.fn(),
+  set: jest.fn(),
+  remove: jest.fn(),
 }));
 
 // Test component that uses the token context
@@ -61,8 +63,9 @@ describe('TokenProvider', () => {
   });
 
   it('handles unauthenticated user', async () => {
-    // Mock unauthenticated user
-    require('js-cookie').get.mockReturnValue(null);
+  // Mock unauthenticated user (return undefined so auth check treats as absent)
+  require('js-cookie').get.mockReturnValue(undefined);
+  mockedAxios.get.mockReset();
 
     render(
       <TokenProvider>
