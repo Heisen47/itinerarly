@@ -32,7 +32,6 @@ docker-compose*
 # Documentation and config files
 README.md
 *.md
-tsconfig.json
 
 # IDE and OS files
 .vscode/
