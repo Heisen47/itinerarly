@@ -1,5 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { NextRequest } from "next/server";
+import { callGeminiWithSimpleRetry } from "@/lib/geminiClient";
+import { toHttpError, ApiError } from "@/lib/errors";
 
 export async function POST(req: NextRequest) {
   try {
@@ -26,19 +28,13 @@ export async function POST(req: NextRequest) {
     }
 
     if (!process.env.GEMINI_API_KEY) {
-      console.error("GEMINI_API_KEY is not set in environment variables.");
-      return new Response(
-        JSON.stringify({
-          error: "Server misconfiguration: Gemini API key is missing.",
-        }),
-        { status: 500 }
-      );
+      throw new ApiError(500, "CONFIG_ERROR", "Server misconfiguration: Gemini API key is missing.");
     }
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     const models = ["gemini-2.0-flash", "gemini-2.5-flash"];
     let currentModelIndex = 0;
 
-    async function tryGenerate() {
+    const result = await callGeminiWithSimpleRetry(async () => {
       try {
         const response = await ai.models.generateContent({
           model: models[currentModelIndex],
@@ -69,28 +65,20 @@ export async function POST(req: NextRequest) {
               Now generate for: ${formData.destination}, ${formData.people} people, ${formData.days} days, budget: ${formData.budget} (INR and USD) per head. Return in 80 words or less.
             `,
         });
-        let text =
-          typeof response.text === "string" ? response.text.trim() : "";
-        return text;
+        const text = typeof response.text === "string" ? response.text.trim() : "";
+        return text as unknown as string;
       } catch (error: any) {
-        if (
-          error.message?.includes("rate limit") &&
-          currentModelIndex < models.length - 1
-        ) {
+        if (error?.message?.includes("rate limit") && currentModelIndex < models.length - 1) {
           currentModelIndex++;
-          return tryGenerate();
         }
-        console.error("Gemini API error:", error);
-        return { error: "Failed to generate content" };
+        throw error;
       }
-    }
+    });
 
-    const result = await tryGenerate();
     return new Response(JSON.stringify({ result }), { status: 200 });
   } catch (err) {
-    console.error("Server error:", err);
-    return new Response(JSON.stringify({ error: "Server error" }), {
-      status: 500,
-    });
+    const { status, payload } = toHttpError(err);
+    console.error("itinerary POST error:", payload);
+    return new Response(JSON.stringify({ error: payload }), { status });
   }
 }

@@ -51,6 +51,7 @@ export function setCookieSafely(
   options?: any
 ): void {
   if (!Cookies || !name) return;
+  if (typeof Cookies.set !== 'function') return; // no-op in non-browser/test env
   
   if (name === 'auth-token' || name === 'authToken' || name.toLowerCase().includes('jwt')) {
     const cleanValue = extractJwtToken(value);

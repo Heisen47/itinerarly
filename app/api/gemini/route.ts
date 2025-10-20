@@ -1,20 +1,21 @@
 import { GoogleGenAI } from "@google/genai";
+import { callGeminiWithSimpleRetry } from "@/lib/geminiClient";
+import { toHttpError, ApiError } from "@/lib/errors";
 
 export async function POST(req: Request) {
   try {
     const { placeName } = await req.json();
     if (!placeName || typeof placeName !== "string" || placeName.trim() === "") {
-      return new Response(JSON.stringify({ error: "Invalid or missing placeName in request." }), { status: 400 });
+      return new Response(JSON.stringify({ error: { code: 'BAD_REQUEST', message: "Invalid or missing placeName in request." } }), { status: 400 });
     }
     if (!process.env.GEMINI_API_KEY) {
-      console.error("GEMINI_API_KEY is not set in environment variables.");
-      return new Response(JSON.stringify({ error: "Server misconfiguration: Gemini API key is missing." }), { status: 500 });
+      throw new ApiError(500, 'CONFIG_ERROR', 'Server misconfiguration: Gemini API key is missing.');
     }
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     const models = ["gemini-2.0-flash", "gemini-2.5-flash"];
     let currentModelIndex = 0;
 
-    async function tryGenerate() {
+    const result = await callGeminiWithSimpleRetry(async () => {
       try {
         const response = await ai.models.generateContent({
           model: models[currentModelIndex],
@@ -22,32 +23,19 @@ export async function POST(req: Request) {
 Example: {"bestTime":"October to March","attractions":[{"name":"Red Fort","coordinates":[28.6562,77.2410]},{"name":"Qutub Minar","coordinates":[28.5244,77.1855]}],"food":["Chaat","Butter Chicken","Paratha"]} 
 For the place: ${placeName}`
         });
-        return response.text;
-      } catch (error) {
-        const errorMsg = (typeof error === "object" && error && "message" in error)
-          ? (error as any).message
-          : String(error);
-        if (errorMsg?.includes('rate limit') && currentModelIndex < models.length - 1) {
+        return typeof response.text === 'string' ? response.text : String(response.text ?? '');
+      } catch (error: any) {
+        if (error?.message?.includes('rate limit') && currentModelIndex < models.length - 1) {
           currentModelIndex++;
-          return tryGenerate();
         }
-        console.error("Gemini API error:", errorMsg);
-        return `Failed to generate content: ${errorMsg}`;
+        throw error;
       }
-    }
+    });
 
-    const result = await tryGenerate();
     return new Response(JSON.stringify({ result }), { status: 200 });
   } catch (err) {
-    console.error("Gemini API route error:", err);
-    let errorMessage = "Server error";
-    if (typeof err === "object" && err !== null && "message" in err && typeof (err as { message?: unknown }).message === "string") {
-      if ((err as { message: string }).message.includes("rate limit")) {
-        errorMessage = "Gemini API rate limit exceeded. Please try again later.";
-      } else {
-        errorMessage = (err as { message: string }).message;
-      }
-    }
-    return new Response(JSON.stringify({ error: errorMessage }), { status: 500 });
+    const { status, payload } = toHttpError(err);
+    console.error("/api/gemini POST error:", payload);
+    return new Response(JSON.stringify({ error: payload }), { status });
   }
 }
