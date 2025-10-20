@@ -218,7 +218,6 @@ const Navbar = () => {
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-8">
               {navItems.map((item) =>
-                item.isSection ? (
                   <button
                     key={item.label}
                     onClick={() => scrollToSection(item.href.slice(1))}
@@ -226,15 +225,6 @@ const Navbar = () => {
                   >
                     {item.label}
                   </button>
-                ) : (
-                  <Link
-                    key={item.label}
-                    href={item.href}
-                    className="text-white/90 hover:text-orange-400 transition-colors duration-300 font-medium"
-                  >
-                    {item.label}
-                  </Link>
-                )
               )}
 
               {/* Profile Section or Sign In Button */}
