@@ -1,9 +1,6 @@
 # Build stage
 FROM node:20-alpine AS build
 
-# Set NODE_ENV to production for security
-ENV NODE_ENV=production
-
 WORKDIR /app
 
 # Create non-root user early for security
@@ -14,7 +11,7 @@ RUN addgroup -S -g 1001 nodejs && \
 COPY package*.json ./
 
 # Install dependencies with security flags
-RUN npm ci --only=production --audit-level=moderate && \
+RUN npm ci --audit-level=moderate && \
     npm cache clean --force
 
 # Copy TypeScript and Next.js config files first
