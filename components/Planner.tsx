@@ -300,16 +300,16 @@ export default function Planner() {
   };
 
   const fetchUserInfo = async () => {
-    if (process.env.NODE_ENV === "development") {
-      console.log("🛠️ DEV MODE: fetchUserInfo mocked - fake user");
-      const fakeUser = {
-        name: "Dev User",
-        email: "dev@example.com",
-        avatar: `https://ui-avatars.com/api/?name=Dev+User&background=3b82f6&color=fff&size=128&rounded=true`,
-      };
-      setUserInfo(fakeUser);
-      return;
-    }
+    // if (process.env.NODE_ENV === "development") {
+    //   console.log("🛠️ DEV MODE: fetchUserInfo mocked - fake user");
+    //   const fakeUser = {
+    //     name: "Dev User",
+    //     email: "dev@example.com",
+    //     avatar: `https://ui-avatars.com/api/?name=Dev+User&background=3b82f6&color=fff&size=128&rounded=true`,
+    //   };
+    //   setUserInfo(fakeUser);
+    //   return;
+    // }
 
     try {
       const response = await axios.get(`${SiteUrl}/api/v1/user/profile`, {
