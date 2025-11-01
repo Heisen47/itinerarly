@@ -7,6 +7,7 @@ import ItineraryGeneration from "../lib/ItineraryGeneration";
 import Itinerary from "./Itinerary";
 import { IoMdHome } from "react-icons/io";
 import { GoNorthStar } from "react-icons/go";
+
 import {
   User,
   ChevronDown,
@@ -19,7 +20,7 @@ import {
   LoaderIcon,
 } from "lucide-react";
 import { SignInModal } from "./SignInModal";
-import axios from "axios";
+import axios from "../lib/axios-config";
 import Cookies from "js-cookie";
 import Link from "next/link";
 import { FaUmbrellaBeach } from "react-icons/fa";
@@ -34,6 +35,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+
+import indiaGeoJson from "../app/start/india-geoJson.json";
+
 export default function Planner() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [plannerMode, setPlannerMode] = useState<"manual" | "month">("manual");
@@ -63,6 +67,11 @@ export default function Planner() {
   const [openModal, setOpenModal] = useState(false);
   const [showTokenModal, setShowTokenModal] = useState(false);
 
+  const [isValidDestination, setIsValidDestination] = useState(true);
+  const [validationError, setValidationError] = useState("");
+  const [isValidating, setIsValidating] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+
   const SiteUrl: string =
     process.env.NEXT_PUBLIC_SITE_URL || "https://itinerarly-be.onrender.com";
 
@@ -73,14 +82,165 @@ export default function Planner() {
     refreshTokenCount,
     isTokenAvailable,
     logout,
-    isAuthenticated
+    isAuthenticated,
   } = useToken();
 
   const router = useRouter();
 
+  const calculateLevenshteinDistance = (str1: string, str2: string): number => {
+    const track = Array(str2.length + 1)
+      .fill(null)
+      .map(() => Array(str1.length + 1).fill(0));
+
+    for (let i = 0; i <= str1.length; i += 1) {
+      track[0][i] = i;
+    }
+    for (let j = 0; j <= str2.length; j += 1) {
+      track[j][0] = j;
+    }
+
+    for (let j = 1; j <= str2.length; j += 1) {
+      for (let i = 1; i <= str1.length; i += 1) {
+        const indicator = str1[i - 1] === str2[j - 1] ? 0 : 1;
+        track[j][i] = Math.min(
+          track[j][i - 1] + 1,
+          track[j - 1][i] + 1,
+          track[j - 1][i - 1] + indicator
+        );
+      }
+    }
+
+    return track[str2.length][str1.length];
+  };
+
+  const calculateSimilarity = (str1: string, str2: string): number => {
+    const maxLen = Math.max(str1.length, str2.length);
+    if (maxLen === 0) return 100;
+
+    const distance = calculateLevenshteinDistance(
+      str1.toLowerCase(),
+      str2.toLowerCase()
+    );
+    return ((maxLen - distance) / maxLen) * 100;
+  };
+
+  const applySuggestion = (suggestion: string) => {
+    setFormData((prev) => ({ ...prev, destination: suggestion }));
+    setIsValidDestination(true);
+    setValidationError("");
+    setSuggestions([]);
+  };
+
+  const validatePlace = async (place: string) => {
+    const trimmedPlace = place.trim();
+    if (!trimmedPlace) {
+      setIsValidDestination(true);
+      setValidationError("");
+      setSuggestions([]);
+      setIsValidating(false);
+      return;
+    }
+
+    setIsValidating(true);
+    setValidationError("");
+    setSuggestions([]);
+
+    const geoData = indiaGeoJson;
+
+    const placeNames = geoData.features
+      .map((feature: any) =>
+        [
+          feature.properties?.district?.trim(),
+          feature.properties?.st_nm?.trim(),
+        ].filter(Boolean)
+      )
+      .flat()
+      .filter(
+        (value, index, self) =>
+          self.findIndex((v) => v.toLowerCase() === value.toLowerCase()) ===
+          index
+      );
+    
+    if (placeNames.length === 0) {
+       console.error("DEBUG: `placeNames` array is still empty. This shouldn't happen now.");
+    }
+
+    const normalizedPlace = trimmedPlace.toLowerCase();
+
+    const isValid = placeNames.some(
+      (name: string) => name.toLowerCase() === normalizedPlace
+    );
+
+    setIsValidDestination(isValid);
+
+    if (!isValid) {
+      const partialMatches = placeNames.filter((name: string) => {
+        const normalizedName = name.toLowerCase();
+        const inputWords = normalizedPlace.split(" ");
+        const dataWords = normalizedName.split(" ");
+
+        return inputWords.some((inputWord) =>
+          dataWords.some(
+            (dataWord) =>
+              dataWord.includes(inputWord) ||
+              inputWord.includes(dataWord) ||
+              dataWord.startsWith(inputWord) ||
+              inputWord.startsWith(dataWord)
+          )
+        );
+      });
+
+      const similarityMatches = placeNames
+        .map((name: string) => ({
+          name,
+          similarity: calculateSimilarity(normalizedPlace, name.toLowerCase()),
+        }))
+        .filter((item) => item.similarity >= 60)
+        .sort((a, b) => b.similarity - a.similarity);
+
+      const containsMatches = placeNames.filter((name: string) => {
+        const normalizedName = name.toLowerCase();
+        return (
+          normalizedName.includes(normalizedPlace) ||
+          normalizedPlace.includes(normalizedName)
+        );
+      });
+
+      const allMatches = [
+        ...new Set([
+          ...containsMatches,
+          ...partialMatches,
+          ...similarityMatches.map((m) => m.name),
+        ]),
+      ];
+
+      const topSuggestions = allMatches.slice(0, 5);
+
+      setSuggestions(topSuggestions);
+
+      if (topSuggestions.length > 0) {
+        setValidationError(
+          `Did you mean: ${topSuggestions.map((s) => `'${s}'`).join(", ")}?`
+        );
+      } else {
+        setValidationError(
+          `"${trimmedPlace}" not found. Please try a valid place in India.`
+        );
+      }
+    } else {
+      setSuggestions([]);
+      setValidationError("");
+    }
+
+    setIsValidating(false);
+  };
+
+
   const extractDestinationName = (itineraryText: string): string => {
     const destinationMatch = itineraryText.match(/Destination:\s*([^\n]+)/i);
-    return destinationMatch ? destinationMatch[1].trim() : "AI Recommended Destination";
+    return destinationMatch
+      ? destinationMatch[1].trim()
+      : "AI Recommended Destination";
   };
 
   const handleModal = () => {
@@ -96,46 +256,61 @@ export default function Planner() {
   };
 
   const handleLogout = async (): Promise<void> => {
-  setIsLoggedIn(false);
-  setUserInfo(null);
-  setIsProfileDropdownOpen(false);
-  
-  const cookies = document.cookie.split(";");
-  for (let i = 0; i < cookies.length; i++) {
-    const cookie = cookies[i];
-    const eqPos = cookie.indexOf("=");
-    const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
-    document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;";
-    document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=" + window.location.hostname;
-  }
-  
-  if (typeof window !== 'undefined') {
-    sessionStorage.clear();
-    localStorage.clear();
-  }
+    setIsLoggedIn(false);
+    setUserInfo(null);
+    setIsProfileDropdownOpen(false);
 
-  logout();
+    const cookies = document.cookie.split(";");
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i];
+      const eqPos = cookie.indexOf("=");
+      const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+      document.cookie =
+        name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;";
+      document.cookie =
+        name +
+        "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=" +
+        window.location.hostname;
+    }
 
-  try {
-    await axios.post(
-      `${SiteUrl}/api/v1/logout`,
-      {},
-      {
-        withCredentials: true,
-        timeout: 5000,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
-  } catch (err) {
-    console.error("Backend logout error (frontend already cleaned up):", err);
-  }
+    if (typeof window !== "undefined") {
+      sessionStorage.clear();
+      localStorage.clear();
+    }
 
-  window.location.href = "/";
-};
+    logout();
+
+    try {
+      await axios.post(
+        `${SiteUrl}/api/v1/logout`,
+        {},
+        {
+          withCredentials: true,
+          timeout: 5000,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    } catch (err) {
+      console.error("Backend logout error (frontend already cleaned up):", err);
+    }
+
+    window.location.href = "/";
+  };
 
   const fetchUserInfo = async () => {
+    if (process.env.NODE_ENV === "development") {
+      console.log("🛠️ DEV MODE: fetchUserInfo mocked - fake user");
+      const fakeUser = {
+        name: "Dev User",
+        email: "dev@example.com",
+        avatar: `https://ui-avatars.com/api/?name=Dev+User&background=3b82f6&color=fff&size=128&rounded=true`,
+      };
+      setUserInfo(fakeUser);
+      return;
+    }
+
     try {
       const response = await axios.get(`${SiteUrl}/api/v1/user/profile`, {
         withCredentials: true,
@@ -143,8 +318,8 @@ export default function Planner() {
           "Content-Type": "application/json",
         },
         params: {
-          _t: new Date().getTime()
-        }
+          _t: new Date().getTime(),
+        },
       });
 
       const userData = response.data;
@@ -162,42 +337,6 @@ export default function Planner() {
     }
   };
 
-  useEffect(() => {
-    const checkLogin = () => {
-      const loggedIn = Cookies.get("isLoggedIn") === "true";
-      setIsLoggedIn(loggedIn || isAuthenticated);
-
-      if ((loggedIn || isAuthenticated) && !userInfo) {
-        fetchUserInfo();
-      }
-    };
-
-    checkLogin();
-
-    window.addEventListener("focus", checkLogin);
-    return () => window.removeEventListener("focus", checkLogin);
-  }, [userInfo, isAuthenticated]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (!target.closest(".profile-dropdown")) {
-        setIsProfileDropdownOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-
-  useEffect(() => {
-    if (isAuthenticated && !userInfo) {
-      fetchUserInfo();
-    }
-    setIsLoggedIn(isAuthenticated);
-  }, [isAuthenticated]);
-
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -213,6 +352,12 @@ export default function Planner() {
   };
 
   const generateItinerary = async () => {
+    if (!isValidDestination || !formData.destination.trim()) {
+      if (validationError) return;
+      setValidationError("Please enter a valid place in India.");
+      return;
+    }
+
     setLoading(true);
     try {
       if (!isLoggedIn) {
@@ -383,6 +528,41 @@ export default function Planner() {
     }
   }
 
+  useEffect(() => {
+    const checkLogin = () => {
+      const loggedIn = Cookies.get("isLoggedIn") === "true";
+      setIsLoggedIn(loggedIn || isAuthenticated);
+
+      if ((loggedIn || isAuthenticated) && !userInfo) {
+        fetchUserInfo();
+      }
+    };
+
+    checkLogin();
+
+    window.addEventListener("focus", checkLogin);
+    return () => window.removeEventListener("focus", checkLogin);
+  }, [userInfo, isAuthenticated]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest(".profile-dropdown")) {
+        setIsProfileDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated && !userInfo) {
+      fetchUserInfo();
+    }
+    setIsLoggedIn(isAuthenticated);
+  }, [isAuthenticated]);
+
   const months = [
     "January",
     "February",
@@ -412,7 +592,6 @@ export default function Planner() {
         <Drawer.Root open={drawerOpen} onOpenChange={setDrawerOpen}>
           <Drawer.Trigger asChild>
             <div className="p-2 text-white text-center rounded cursor-pointer shadow-md bg-blue-700 hover:bg-blue-800 transition flex items-center justify-center">
-              {/* Show icon on small screens, text on larger screens */}
               <span className="block sm:hidden">
                 <FaUmbrellaBeach className="w-5 h-5" />
               </span>
@@ -422,13 +601,12 @@ export default function Planner() {
           <Drawer.Portal>
             <Drawer.Overlay className="fixed inset-0 bg-black/40 z-[1000]" />
             <Drawer.Content className="bg-gray-100 h-fit fixed bottom-0 left-0 right-0 outline-none rounded-t-lg z-[1010]">
-              {/* Rest of the drawer content remains the same */}
               <Drawer.Title className="text-lg font-bold p-4">
                 Plan Your Trip
               </Drawer.Title>
 
               <div className="p-4 bg-white space-y-4">
-                {/* Switch Toggle Inside Drawer */}
+                {/* Mode Toggle */}
                 <div className="flex items-center justify-center mb-6">
                   <div className="flex bg-gray-200 rounded-lg p-1">
                     <button
@@ -454,7 +632,6 @@ export default function Planner() {
                   </div>
                 </div>
 
-                {/* Forms remain the same */}
                 {plannerMode === "manual" ? (
                   <form
                     onSubmit={(e) => {
@@ -462,7 +639,6 @@ export default function Planner() {
                       generateItinerary();
                     }}
                   >
-                    {/* Manual form content remains unchanged */}
                     <div>
                       <label
                         htmlFor="destination"
@@ -476,10 +652,39 @@ export default function Planner() {
                         name="destination"
                         value={formData.destination}
                         onChange={handleChange}
+                        onBlur={() => validatePlace(formData.destination)}
                         required
                         placeholder="Enter destination"
-                        className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2"
+                        className={`mt-1 block w-full rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 transition-colors ${
+                          !isValidDestination
+                            ? "border-red-500 bg-red-50"
+                            : "border-gray-300"
+                        }`}
                       />
+                      {validationError && (
+                        <p className="text-red-500 text-sm mt-1">
+                          {validationError}
+                        </p>
+                      )}
+                      {isValidating && (
+                        <p className="text-blue-500 text-sm mt-1">
+                          Validating...
+                        </p>
+                      )}
+                      {suggestions.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {suggestions.map((suggestion) => (
+                            <button
+                              key={suggestion}
+                              type="button"
+                              onClick={() => applySuggestion(suggestion)}
+                              className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition"
+                            >
+                              {suggestion}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
                     <div className="mt-4">
@@ -554,8 +759,12 @@ export default function Planner() {
 
                     <button
                       type="submit"
-                      disabled={loading}
-                      className="mt-6 w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition disabled:opacity-50"
+                      disabled={
+                        loading ||
+                        !isValidDestination ||
+                        !formData.destination.trim()
+                      }
+                      className="mt-6 w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {loading ? (
                         <div className="flex items-center justify-center">
@@ -576,7 +785,8 @@ export default function Planner() {
                             <path
                               className="opacity-75"
                               fill="currentColor"
-                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                              d="M4 12a8 8
+ 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                             ></path>
                           </svg>
                           Generating...
@@ -593,7 +803,6 @@ export default function Planner() {
                       generateMonthBasedItinerary();
                     }}
                   >
-                    {/* Month form content remains unchanged */}
                     <div>
                       <label
                         htmlFor="month"
@@ -757,7 +966,6 @@ export default function Planner() {
                     <User className="w-5 h-5 text-blue-600" />
                   )}
                 </div>
-                {/* Hide name on small screens, show only on medium+ screens */}
                 <span className="text-sm font-medium hidden md:block">
                   {userInfo?.name ? userInfo.name.split(" ")[0] : "User"}
                 </span>
@@ -805,7 +1013,6 @@ export default function Planner() {
                     </div>
                   </div>
 
-                  {/* Add token info in dropdown using global context */}
                   {typeof token !== "undefined" && (
                     <div className="px-4 py-2 text-sm text-gray-600 border-b border-gray-100 bg-gray-50">
                       <div className="flex items-center justify-between">
@@ -823,8 +1030,6 @@ export default function Planner() {
                       </div>
                     </div>
                   )}
-
-                  
 
                   <a
                     href="https://coff.ee/heisen47"
@@ -877,12 +1082,15 @@ export default function Planner() {
         open={showModal}
         onClose={() => setShowModal(false)}
         itinerary={itinerary}
-        destination={destinationName || formData.destination || "AI Recommended Destination"}
+        destination={
+          destinationName ||
+          formData.destination ||
+          "AI Recommended Destination"
+        }
       />
 
       <SignInModal openModal={openModal} onClose={handleModal} />
 
-      {/* Token Limit Modal */}
       <Dialog open={showTokenModal} onOpenChange={setShowTokenModal}>
         <DialogContent className="sm:max-w-[425px] bg-white shadow-xl rounded-lg border border-gray-300">
           <DialogHeader>
