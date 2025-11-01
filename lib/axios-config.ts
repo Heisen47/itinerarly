@@ -2,8 +2,6 @@ import axios from 'axios';
 
 axios.defaults.withCredentials = true;
 
-axios.defaults.withCredentials = true;
-
 axios.interceptors.request.use(
   (config) => {
     const cookieHeader = config.headers['Cookie'] || '';

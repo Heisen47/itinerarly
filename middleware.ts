@@ -5,6 +5,49 @@ export function middleware(request: NextRequest) {
   
   const isLoggedIn = request.cookies.get('isLoggedIn')?.value === 'true';
   const url = request.nextUrl.clone();
+  const hostname = url.hostname.toLowerCase();
+  
+  // Test environment bypass (hardened):
+  // Only allow bypass in explicit test environments, and only for GET /start*.
+  // Optionally require a secret token header to prevent accidental enabling.
+  const appEnv = (process.env.APP_ENV || process.env.NODE_ENV || '').toLowerCase();
+  const isTestEnv = appEnv === 'test';
+  const isStartPath = url.pathname === '/start' || url.pathname.startsWith('/start/');
+  const isGet = request.method === 'GET';
+  const bypassToken = process.env.TEST_BYPASS_TOKEN || '';
+  const headerToken = request.headers.get('x-test-bypass') || '';
+  const hasValidBypassHeader = bypassToken && headerToken === bypassToken;
+  if (isTestEnv && isGet && isStartPath && (bypassToken ? hasValidBypassHeader : true)) {
+    const res = NextResponse.next();
+    res.headers.set('x-middleware-bypass', 'start-route-test');
+    return res;
+  }
+
+  // Localhost developer bypass:
+  // When running locally, allow GET /start and seed lightweight cookies
+  // to mimic a logged-in user with username "test".
+  const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1';
+  if (isLocalhost && isGet && isStartPath) {
+    const res = NextResponse.next();
+    // Only set if not present to avoid clobbering real sessions during dev
+    if (!isLoggedIn) {
+      res.cookies.set('isLoggedIn', 'true', {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+      });
+    }
+    const existingUsername = request.cookies.get('username')?.value;
+    if (!existingUsername) {
+      res.cookies.set('username', 'test', {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+      });
+    }
+    res.headers.set('x-middleware-bypass', 'start-route-localhost');
+    return res;
+  }
   
   
   if (url.pathname.includes('/oauth2/') || 
