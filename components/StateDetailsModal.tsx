@@ -30,6 +30,7 @@ export function StateDetailsModal({
   mousePosition,
 }: StateDetailsModal) {
   const [dataLoad, setDataLoad] = useState(false);
+  const [progressText, setProgressText] = useState("");
   const [details, setDetails] = useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
@@ -42,7 +43,12 @@ export function StateDetailsModal({
   const SiteUrl: string = process.env.NEXT_PUBLIC_SITE_URL || "https://itinerarly-be.onrender.com";
   
   useEffect(() => {
+    const isDevTestUser = process.env.NEXT_PUBLIC_DEV_TEST_USER === "true";
     const checkLogin = () => {
+      if (isDevTestUser) {
+        setIsLoggedIn(true);
+        return;
+      }
       const loggedIn = getCookieSafely(Cookies, "isLoggedIn") === "true";
       setIsLoggedIn(loggedIn);
       
@@ -136,14 +142,16 @@ export function StateDetailsModal({
         return;
       }
 
-      const res = await axios.post("/api/stateDetails", {
-        placeName: stateName,
+      setProgressText("");
+      const { generateStateDetails } = await import("@/lib/AIGeneration");
+      const result = await generateStateDetails(stateName, (text: string) => {
+        setProgressText(text);
       });
-      setDetails(res.data.result);
+      setDetails(result);
 
-      if (typeof window !== "undefined" && res.data.result) {
+      if (typeof window !== "undefined" && result) {
         let place = stateName.toLowerCase();
-        localStorage.setItem(`stateDetails_${place}`, res.data.result);
+        localStorage.setItem(`stateDetails_${place}`, result);
       }
       setIsNetworkError(false);
       setErrorMessage("");
@@ -157,8 +165,8 @@ export function StateDetailsModal({
       }
       setShowTokenModal(true);
     }
-    
     setDataLoad(false);
+    setProgressText("");
   };
 
   useEffect(() => {
@@ -194,10 +202,12 @@ export function StateDetailsModal({
               }
             >
               {dataLoad ? (
-                <>
+                <div className="flex items-center">
                   <Loader className="animate-spin h-4 w-4 mr-2" />
-                  Generating...
-                </>
+                  <span className="truncate max-w-[200px] text-xs">
+                    {progressText ? progressText : "Generating..."}
+                  </span>
+                </div>
               ) : isNetworkError ? (
                 "Connection Error"
               ) : !isLoggedIn ? (
