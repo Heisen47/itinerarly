@@ -77,6 +77,43 @@ const TokenContext = createContext<TokenContextType>({
 });
 
 export function TokenProvider({ children }: { children: ReactNode }) {
+  // ── DEV TEST USER BYPASS ──────────────────────────────────────────
+  // When NEXT_PUBLIC_DEV_TEST_USER=true, skip all backend auth and
+  // provide a fake logged-in user with unlimited tokens.
+  const isDevTestUser = process.env.NEXT_PUBLIC_DEV_TEST_USER === "true";
+
+  if (isDevTestUser) {
+    const devValue: TokenContextType = {
+      token: 999,
+      isLoading: false,
+      error: null,
+      refreshTokenCount: async () => {
+        console.log("[DEV_TEST_USER] refreshTokenCount called (no-op)");
+      },
+      consumeToken: async () => {
+        console.log("[DEV_TEST_USER] consumeToken called → always true");
+        return true;
+      },
+      isTokenAvailable: true,
+      isAuthenticated: true,
+      logout: () => {
+        console.log("[DEV_TEST_USER] logout called (no-op)");
+      },
+    };
+
+    // Also set cookies/localStorage so component-level checks pass
+    if (typeof window !== "undefined") {
+      try {
+        Cookies.set("isLoggedIn", "true");
+        sessionStorage.setItem("isAuthenticated", "true");
+        localStorage.setItem("isAuthenticated", "true");
+      } catch (_) { /* SSR guard */ }
+    }
+
+    return <TokenContext.Provider value={devValue}>{children}</TokenContext.Provider>;
+  }
+  // ── END DEV TEST USER BYPASS ──────────────────────────────────────
+
   const [token, setToken] = useState<number | undefined>(undefined);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);

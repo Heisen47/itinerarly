@@ -99,7 +99,9 @@ export default function IndiaMap({ type }: IndiaMapProps) {
   useEffect(() => {
     const loadMap = async () => {
       try {
-        if (!indiaGeoJson) throw new Error("GeoJSON data not found");
+        console.log("Loaded GeoJSON:", indiaGeoJson);
+        const geoData = (indiaGeoJson as any)?.default || indiaGeoJson;
+        if (!geoData) throw new Error("GeoJSON data not found");
         await new Promise((resolve) => setTimeout(resolve, 300));
         setIsMapLoading(false);
       } catch (error) {
@@ -202,7 +204,7 @@ export default function IndiaMap({ type }: IndiaMapProps) {
             maxZoom={5}
             minZoom={minZoom}    //map cursor-zoom
           >
-            <Geographies geography={indiaGeoJson}>
+            <Geographies geography={(indiaGeoJson as any)?.default || indiaGeoJson}>
               {({ geographies }: { geographies: any[] }) =>
                 geographies.map((geo, index) => {
                   const name =

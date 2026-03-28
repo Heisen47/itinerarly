@@ -37,6 +37,7 @@ import {
 import { Button } from "@/components/ui/button";
 
 import indiaGeoJson from "../app/start/india-geoJson.json";
+import { setModelId } from "../lib/webLLMClient";
 
 export default function Planner() {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -57,6 +58,7 @@ export default function Planner() {
   const [destinationName, setDestinationName] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [progressText, setProgressText] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userInfo, setUserInfo] = useState<{
     name?: string;
@@ -66,6 +68,18 @@ export default function Planner() {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [openModal, setOpenModal] = useState(false);
   const [showTokenModal, setShowTokenModal] = useState(false);
+  const [selectedModel, setSelectedModel] = useState("Llama-3-8B-Instruct-q4f32_1-MLC");
+
+  const handleModelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newModel = e.target.value;
+    setSelectedModel(newModel);
+    setModelId(newModel);
+  };
+
+  const [isValidDestination, setIsValidDestination] = useState(true);
+  const [validationError, setValidationError] = useState("");
+  const [isValidating, setIsValidating] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
 
   const [isValidDestination, setIsValidDestination] = useState(true);
   const [validationError, setValidationError] = useState("");
@@ -145,7 +159,7 @@ export default function Planner() {
     setValidationError("");
     setSuggestions([]);
 
-    const geoData = indiaGeoJson;
+    const geoData = (indiaGeoJson as any)?.default || indiaGeoJson;
 
     const placeNames = geoData.features
       .map((feature: any) =>
@@ -156,7 +170,7 @@ export default function Planner() {
       )
       .flat()
       .filter(
-        (value, index, self) =>
+        (value: string, index: number, self: string[]) =>
           self.findIndex((v) => v.toLowerCase() === value.toLowerCase()) ===
           index
       );
@@ -195,8 +209,8 @@ export default function Planner() {
           name,
           similarity: calculateSimilarity(normalizedPlace, name.toLowerCase()),
         }))
-        .filter((item) => item.similarity >= 60)
-        .sort((a, b) => b.similarity - a.similarity);
+        .filter((item: { name: string; similarity: number }) => item.similarity >= 60)
+        .sort((a: { name: string; similarity: number }, b: { name: string; similarity: number }) => b.similarity - a.similarity);
 
       const containsMatches = placeNames.filter((name: string) => {
         const normalizedName = name.toLowerCase();
@@ -210,7 +224,7 @@ export default function Planner() {
         ...new Set([
           ...containsMatches,
           ...partialMatches,
-          ...similarityMatches.map((m) => m.name),
+          ...similarityMatches.map((m: { name: string; similarity: number }) => m.name),
         ]),
       ];
 
@@ -391,7 +405,10 @@ export default function Planner() {
         return;
       }
 
-      const result = await ItineraryGeneration(formData);
+      setProgressText(""); // reset before generation
+      const result = await ItineraryGeneration(formData, (text: string) => {
+        setProgressText(text);
+      });
       setItinerary(result ?? "");
       setDestinationName(formData.destination);
 
@@ -411,6 +428,7 @@ export default function Planner() {
       setShowModal(true);
     } finally {
       setLoading(false);
+      setProgressText("");
     }
   };
 
@@ -480,30 +498,11 @@ export default function Planner() {
     budget: string;
   }) {
     try {
-      const requestBody = {
-        formData: {
-          destination: "Best destination for " + monthData.month,
-          people: monthData.people,
-          days: monthData.days,
-          budget: monthData.budget,
-          month: monthData.month,
-        },
-      };
-
-      const response = await axios.post("/api/RandomItinerary", requestBody, {
-        headers: {
-          "Content-Type": "application/json",
-        },
+      setProgressText(""); // reset before generation
+      const { generateRandomItinerary } = await import("@/lib/AIGeneration");
+      const result = await generateRandomItinerary(monthData, (text: string) => {
+        setProgressText(text);
       });
-
-      let result;
-      if (response.data && response.data.result) {
-        result = response.data.result;
-      } else if (typeof response.data === "string") {
-        result = response.data;
-      } else {
-        result = JSON.stringify(response.data, null, 2);
-      }
 
       if (!result) {
         throw new Error("API returned empty result");
@@ -529,7 +528,19 @@ export default function Planner() {
   }
 
   useEffect(() => {
+    const isDevTestUser = process.env.NEXT_PUBLIC_DEV_TEST_USER === "true";
     const checkLogin = () => {
+      if (isDevTestUser) {
+        setIsLoggedIn(true);
+        if (!userInfo) {
+          setUserInfo({
+            name: "Test User",
+            email: "test@localhost",
+            avatar: `https://ui-avatars.com/api/?name=Test+User&background=3b82f6&color=fff&size=128&rounded=true`,
+          });
+        }
+        return;
+      }
       const loggedIn = Cookies.get("isLoggedIn") === "true";
       setIsLoggedIn(loggedIn || isAuthenticated);
 
@@ -557,6 +568,8 @@ export default function Planner() {
   }, []);
 
   useEffect(() => {
+    const isDevTestUser = process.env.NEXT_PUBLIC_DEV_TEST_USER === "true";
+    if (isDevTestUser) return; // already handled by the other effect
     if (isAuthenticated && !userInfo) {
       fetchUserInfo();
     }
@@ -789,7 +802,9 @@ export default function Planner() {
  0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                             ></path>
                           </svg>
-                          Generating...
+                          <span className="truncate max-w-[200px] text-xs">
+                            {progressText ? progressText : "Generating..."}
+                          </span>
                         </div>
                       ) : (
                         "Generate Itinerary"
@@ -926,7 +941,9 @@ export default function Planner() {
                               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                             ></path>
                           </svg>
-                          Finding Best Destination...
+                          <span className="truncate max-w-[200px] text-xs">
+                            {progressText ? progressText : "Finding Best Destination..."}
+                          </span>
                         </div>
                       ) : (
                         "Find Best Destination & Generate Itinerary"
@@ -940,6 +957,19 @@ export default function Planner() {
         </Drawer.Root>
 
         <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center space-x-2">
+          {/* AI Model Selector */}
+          <select 
+            value={selectedModel} 
+            onChange={handleModelChange}
+            className="py-1.5 focus:ring-white pr-8 pl-3 border border-blue-400 bg-blue-700 text-white text-xs rounded-md shadow-sm focus:outline-none focus:ring-1 cursor-pointer hover:bg-blue-800 transition"
+            title="Select Local AI Model"
+          >
+            <option value="Llama-3-8B-Instruct-q4f32_1-MLC">Llama-3 (8B)</option>
+            <option value="Phi-3-mini-4k-instruct-q4f16_1-MLC">Phi-3 (Mini)</option>
+            <option value="Qwen2-1.5B-Instruct-q4f16_1-MLC">Qwen2 (1.5B)</option>
+            <option value="gemma-2-2b-it-q4f16_1-MLC">Gemma-2 (2B)</option>
+          </select>
+
           {isLoggedIn ? (
             <div className="relative profile-dropdown">
               <button
